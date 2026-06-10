@@ -1,0 +1,8 @@
+{
+  "appId": "com.soccerstars.app",
+  "appName": "ساکر استارز",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https"
+  }
+}

@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0c1a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>ساکر استارز</title>
+<link rel="manifest" href="./manifest.json">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+
+<!-- موسیقیِ منو: فقط یک فایل را در مسیر بگذار (menu-music.mp3/.ogg/.m4a/.wav) -->
+<audio id="bgm" loop preload="auto">
+  <source src="./menu-music.mp3" type="audio/mpeg">
+  <source src="./menu-music.ogg" type="audio/ogg">
+  <source src="./menu-music.m4a" type="audio/mp4">
+  <source src="./menu-music.wav" type="audio/wav">
+</audio>
+
+<!-- ====================== منوی اصلی ====================== -->
+<section id="menuScreen" class="screen active">
+  <div class="menu-wrap">
+    <div class="trophy" aria-hidden="true">🏆</div>
+    <h1 class="brand">ساکر استارز</h1>
+    <p class="tag">فوتبالِ دو بُعدیِ آفلاین</p>
+
+    <button class="btn play" id="goPlay"><span class="ball-ic" aria-hidden="true">⚽</span><span>بزن بریم</span></button>
+
+    <div class="menu-toggles">
+      <button class="btn ghost mini" id="musicBtn">🎵 موسیقی: روشن</button>
+      <button class="btn ghost mini" id="soundBtn">🔊 صدا: روشن</button>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== انتخابِ زمین ====================== -->
+<section id="levelScreen" class="screen">
+  <div class="panel">
+    <h2 class="panel-title">زمین را انتخاب کن</h2>
+    <div class="levels">
+      <button class="lvl-btn" data-lvl="1"><span class="lvl-dot" style="background:#b98a4e"></span>خاکی<small>زمینِ سفت</small></button>
+      <button class="lvl-btn" data-lvl="2"><span class="lvl-dot" style="background:#2aa85d"></span>چمن<small>معمولی</small></button>
+      <button class="lvl-btn" data-lvl="3"><span class="lvl-dot" style="background:#2e6f86"></span>سالن<small>لیز</small></button>
+    </div>
+    <div class="row">
+      <button class="btn ghost grow" id="backToMenu">بازگشت</button>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== انتخابِ پرچم ====================== -->
+<section id="flagScreen" class="screen">
+  <div class="panel">
+    <h2 class="panel-title">پرچمت را انتخاب کن</h2>
+    <div id="flags" class="flags"></div>
+    <div class="row">
+      <button class="btn ghost" id="backToLevel">بازگشت</button>
+      <button class="btn play grow" id="startBtn">شروع بازی</button>
+    </div>
+  </div>
+</section>
+
+<!-- ====================== صفحه‌ی بازی ====================== -->
+<section id="gameScreen" class="screen">
+  <div id="hud">
+    <div class="team">
+      <canvas id="hudFlagRed" class="hud-flag"></canvas>
+      <span id="scoreRed" class="score">۰</span>
+    </div>
+    <div class="dash">—</div>
+    <div class="team">
+      <span id="scoreBlue" class="score">۰</span>
+      <canvas id="hudFlagBlue" class="hud-flag"></canvas>
+    </div>
+    <span id="turnTimer" class="hourglass" hidden>⏳ ۲۰</span>
+    <button class="btn ghost small" id="backBtn">منو ⟵</button>
+  </div>
+
+  <div class="turnrow">
+    <span id="turnPill"><span>نوبت تو</span><span>🔴</span></span>
+  </div>
+
+  <div class="stage">
+    <canvas id="cv"></canvas>
+    <div id="banner" class="hidden"></div>
+  </div>
+
+  <p class="hint" id="hint">مهره‌ی خودت را بکش و رها کن تا شوت بزنی</p>
+
+  <div id="overlay" class="hidden">
+    <div class="ov-card">
+      <h2 id="ovTitle">بردی! 🏆</h2>
+      <div id="ovSub" class="ov-sub">۰ — ۰</div>
+      <div class="row">
+        <button class="btn ghost" id="ovMenu">منو</button>
+        <button class="btn play grow" id="ovReplay">بازی دوباره</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ترتیبِ بارگذاری مهم است: config → physics → render → audio → main -->
+<script src="./config.js"></script>
+<script src="./physics.js"></script>
+<script src="./render.js"></script>
+<script src="./audio.js"></script>
+<script src="./main.js"></script>
+</body>
+</html>
