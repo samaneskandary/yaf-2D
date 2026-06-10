@@ -43,6 +43,7 @@ function onUp(){
       const power = (pull / MAX_PULL) * MAX_SPEED;
       sel.vx = dir.x * power;
       sel.vy = dir.y * power;
+      shooter = 'red'; shotFirst = firstKick; firstKick = false;   // ثبتِ شوت برای منطقِ خطای ضربه‌ی اول
       kickSound();
       phase = 'sim';
     }
@@ -121,10 +122,32 @@ function updateHUD(){
   }
   updateTurnTimerUI();
 }
-function showBanner(txt){
+/* تزریقِ یک‌باره‌ی کی‌فریم‌های افکتِ گل تا به فایلِ styles.css وابسته نباشیم */
+function ensureBannerFX(){
+  if(document.getElementById('bannerFXStyle')) return;
+  const st = document.createElement('style');
+  st.id = 'bannerFXStyle';
+  st.textContent =
+    '#banner .bnr-in{display:inline-block;transform-origin:center center;will-change:transform;}' +
+    '#banner .bnr-goal{animation:goalPopShake .8s cubic-bezier(.2,.9,.25,1) both;font-size:1.7em;font-weight:900;}' +
+    '@keyframes goalPopShake{' +
+      '0%{transform:scale(.4);opacity:.2}' +
+      '16%{transform:scale(1.45) rotate(-3deg);opacity:1}' +
+      '30%{transform:scale(1.32) translateX(-7px) rotate(3deg)}' +
+      '42%{transform:scale(1.32) translateX(7px) rotate(-3deg)}' +
+      '54%{transform:scale(1.26) translate(-5px,4px) rotate(2deg)}' +
+      '66%{transform:scale(1.26) translate(5px,-4px) rotate(-2deg)}' +
+      '78%{transform:scale(1.2) translateX(-3px)}' +
+      '100%{transform:scale(1.18);opacity:1}}';
+  document.head.appendChild(st);
+}
+function showBanner(txt, big){
   const b = document.getElementById('banner');
   if(!b) return;
-  b.textContent = txt;
+  ensureBannerFX();
+  // متن داخلِ یک span گذاشته می‌شود تا بزرگ‌نمایی/لرزش، مرکزچینیِ خودِ بنر را به‌هم نزند
+  b.innerHTML = '<span class="bnr-in' + (big ? ' bnr-goal' : '') + '"></span>';
+  b.firstChild.textContent = txt;
   b.classList.remove('hidden', 'pop');
   void b.offsetWidth;          // ری‌استارتِ انیمیشن
   b.classList.add('pop');
