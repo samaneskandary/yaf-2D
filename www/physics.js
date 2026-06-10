@@ -8,6 +8,10 @@ function physicsStep(){
   for(const b of all){ const v=Math.hypot(b.vx,b.vy); if(v>maxV)maxV=v; }
   const sub = Math.min(8, Math.max(1, Math.ceil(maxV / (R_BALL))));
   for(let s=0;s<sub;s++){
+    for(const b of all){                       // سقفِ سرعت: از پرتاب‌های افراطی و تونل‌زدن جلوگیری می‌کند
+      const sp = Math.hypot(b.vx, b.vy);
+      if(sp > SPEED_CAP){ const k = SPEED_CAP/sp; b.vx*=k; b.vy*=k; }
+    }
     for(const b of all){ b.x += b.vx/sub; b.y += b.vy/sub; walls(b); }
     for(const b of all) for(const p of posts) staticHit(b,p);
     for(let i=0;i<all.length;i++)
@@ -84,11 +88,22 @@ function checkGoal(){
 }
 function scoreGoal(scorer){
   goalLock = true;                 // از ثبتِ دوباره جلوگیری می‌کند (ولی فیزیک ادامه دارد)
+  if(shotFirst){
+    // گل مستقیماً از نخستین ضربه‌ی راند → خطا و حساب نمی‌شود؛ نوبت به حریف می‌رسد
+    foul = true;
+    pendingScorer = null;
+    showBanner('خطا! گل از ضربه‌ی اول حساب نیست ⚠️');
+    if(typeof timeoutBeep === 'function') timeoutBeep();   // صدای خطا (نه سوتِ گل)
+    clearTimeout(goalTimer);
+    goalTimer = setTimeout(settleGoal, 5000);
+    return;
+  }
+  foul = false;
   pendingScorer = scorer;
   score[scorer]++;
   updateHUD();
   celebrate(scorer);               // سوتِ گل + آهنگک
-  showBanner(scorer==='red' ? 'گُل! 🔴' : 'گُل! 🔵');
+  showBanner(scorer==='red' ? 'گُل! 🔴' : 'گُل! 🔵', true);   // بنرِ بزرگ‌شونده و لرزان
   // کات نمی‌کنیم تا توپ (و همه‌ی مهره‌ها) کاملاً بایستند؛ این کار در حلقه‌ی اصلی دنبال می‌شود.
   // فقط یک ایمنی: اگر اجسام خیلی طول کشیدند، باز هم جمع‌بندی شود.
   clearTimeout(goalTimer);
@@ -96,14 +111,21 @@ function scoreGoal(scorer){
 }
 /* وقتی توپ کاملاً ایستاد: سوتِ کات (متفاوت با سوتِ گل) سپس شروعِ راندِ بعد */
 function settleGoal(){
-  if(phase==='goal' || phase==='win' || !pendingScorer) return;  // فقط یک‌بار
+  if(phase==='goal' || phase==='win') return;          // فقط یک‌بار
+  if(!foul && !pendingScorer) return;                   // چیزی برای جمع‌بندی نیست
   phase='goal';                    // فریزِ کوتاه تا کات
   clearTimeout(goalTimer);
-  hideBanner();                    // اعلامِ گل تا اینجا روی صفحه مانده بود
-  cutWhistle();                    // سوتِ ممتدِ کات
+  hideBanner();                    // اعلامِ گل/خطا تا اینجا روی صفحه مانده بود
+  if(!foul) cutWhistle();          // برای خطا سوتِ کات نمی‌زنیم
   goalTimer = setTimeout(finishGoal, 650);
 }
 function finishGoal(){
+  if(foul){
+    foul = false; goalLock = false;
+    const opp = (shooter==='red') ? 'blue' : 'red';   // نوبت و توپ به حریفِ ضربه‌زننده
+    kickoff(opp, false);
+    return;
+  }
   const scorer = pendingScorer; pendingScorer = null;
   if(score[scorer] >= WIN_GOALS){
     phase='win';
@@ -134,6 +156,7 @@ function aiMove(){
   const power = MAX_SPEED*(cfg.power + Math.random()*0.1);
   best.vx = Math.cos(ang)*power;
   best.vy = Math.sin(ang)*power;
+  shooter = 'blue'; shotFirst = firstKick; firstKick = false;   // ثبتِ شوت برای منطقِ خطای ضربه‌ی اول
   kickSound();
   phase='sim';
 }
