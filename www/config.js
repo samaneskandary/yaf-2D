@@ -23,8 +23,8 @@ const FRICTION  = 0.97;  // اصطکاک هر فریم (پیش‌فرض)
 const FRICTION_BY_LEVEL = {1:0.96, 2:0.965, 3:0.97};
 function fieldFriction(){ return FRICTION_BY_LEVEL[level] || FRICTION; }
 const STOP_V    = 0.18;   // آستانه توقف
-const REST      = 0.83;   // ضریب جهندگی برخوردها (۰٫۹۲→۰٫۸۵) — کمتر ورجه‌ورجه
-const REST_WALL = 0.74;   // جهندگی دیوار (۰٫۸۶→۰٫۷۲) — توپ کنارِ دیواره‌ها پینگ‌پنگ نمی‌کند
+const REST      = 0.86;   // ضریب جهندگی برخوردها (۰٫۹۲→۰٫۸۵) — کمتر ورجه‌ورجه
+const REST_WALL = 0.78;   // جهندگی دیوار (۰٫۸۶→۰٫۷۲) — توپ کنارِ دیواره‌ها پینگ‌پنگ نمی‌کند
 const WIN_GOALS = 3;
 const TURN_TIME = 20000;  // مهلتِ هر نوبتِ بازیکن (میلی‌ثانیه)
 
