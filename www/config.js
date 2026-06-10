@@ -7,22 +7,24 @@
 const FW = 600;
 let   FH = 1040;                       // ارتفاع زمین — بسته به صفحه تنظیم می‌شود
 const WALL = {l:30, r:FW-30, t:84, b:FH-84};
-const GOAL_W = 170;
+const GOAL_W = 150;        // دهانه‌ی کمی باریک‌تر → گل‌زدن کمی سخت‌تر
 const GX1 = (FW-GOAL_W)/2, GX2 = (FW+GOAL_W)/2;   // دهانه دروازه
 const GOAL_DEPTH = 42;     // عمق کم‌تر تا تهِ دروازه از لبه‌ی صفحه بیرون نزند
 const GOAL_H = 34;        // ارتفاعِ توهمِ سه‌بعدیِ دروازه (depth+H = 76 < 84)
 const R_PIECE = 26.25, R_BALL = 15.5, R_POST = 6;   // ۵٪ بزرگ‌تر تا گل‌زدن خیلی راحت نباشد
-const MAX_SPEED = 29;     // بیشینه سرعت شوت (واحد بر فریم) — کمی آرام‌تر
+const MAX_SPEED = 23;     // بیشینه سرعت شوت — آرام‌تر از قبل (۲۹→۲۳) تا بازی کمتر تند باشد
+const SPEED_CAP = MAX_SPEED * 1.3;   // سقفِ سرعتِ هر جسم؛ از پرتاب‌های افراطی و جیترِ توپ جلوگیری می‌کند
 const MAX_PULL  = 260;    // بیشینه کشش انگشت
 const MIN_PULL  = 14;
 const FRICTION  = 0.985;  // اصطکاک هر فریم (پیش‌فرض)
 // زمین ۱ خاکی (پُراصطکاک، توپ سخت‌تر حرکت می‌کند)، ۲ چمن، ۳ سالن (لیز)
 // اصطکاک به‌مرور کم می‌شود: خاکی > چمن > سالن
-const FRICTION_BY_LEVEL = {1:0.960, 2:0.974, 3:0.984};
+// (دست‌نخورده ماند تا روونیِ سُرشِ توپ حفظ شود)
+const FRICTION_BY_LEVEL = {1:0.967, 2:0.982, 3:0.992};
 function fieldFriction(){ return FRICTION_BY_LEVEL[level] || FRICTION; }
 const STOP_V    = 0.18;   // آستانه توقف
-const REST      = 0.92;   // ضریب جهندگی برخوردها
-const REST_WALL = 0.86;   // جهندگی دیوار
+const REST      = 0.85;   // ضریب جهندگی برخوردها (۰٫۹۲→۰٫۸۵) — کمتر ورجه‌ورجه
+const REST_WALL = 0.72;   // جهندگی دیوار (۰٫۸۶→۰٫۷۲) — توپ کنارِ دیواره‌ها پینگ‌پنگ نمی‌کند
 const WIN_GOALS = 3;
 const TURN_TIME = 20000;  // مهلتِ هر نوبتِ بازیکن (میلی‌ثانیه)
 
@@ -94,6 +96,11 @@ let drag = null;      // {x,y} موقعیت فعلی انگشت
 let goalLock = false; // جلوگیری از ثبت چند گله
 let pendingScorer = null, goalTimer = 0; // گلِ معوق تا توپ وارد تور شود
 let aiTimer = 0;
+// --- خطای ضربه‌ی اول: اگر گل مستقیماً از نخستین ضربه‌ی راند بیفتد، حساب نمی‌شود ---
+let firstKick = false; // در شروعِ هر راند true می‌شود و با نخستین شوت false
+let shooter   = null;  // تیمی که شوتِ جاری را زده ('red' | 'blue')
+let shotFirst = false; // آیا شوتِ جاری همان ضربه‌ی اولِ راند بود؟
+let foul      = false; // گلِ خطا در حالِ جمع‌بندی
 
 const AI = { 1:{spread:0.55, power:0.70}, 2:{spread:0.34, power:0.80}, 3:{spread:0.18, power:0.88} };
 const FORM = {
@@ -120,9 +127,10 @@ function kickoff(who, full){
     pieces.push(mk(fx(a), fy(b), 'red'));         // قرمز پایین
     pieces.push(mk(fx(a), fy(1-b), 'blue'));       // آبی بالا (آینه)
   }
-  // توپ دقیقاً روی نقطه‌ی مرکزِ زمین قرار می‌گیرد
-  ball = {x:FW/2, y:FH/2, vx:0, vy:0, r:R_BALL, m:1, ball:true, rot:0};
+  // توپ دقیقاً روی نقطه‌ی مرکزِ زمین قرار می‌گیرد (کمی سنگین‌تر تا کمتر بپَرد و گل کمی سخت‌تر شود)
+  ball = {x:FW/2, y:FH/2, vx:0, vy:0, r:R_BALL, m:1.1, ball:true, rot:0};
   turn = who; sel=null; drag=null; goalLock=false;
+  firstKick = true; foul = false; shotFirst = false;   // راندِ تازه → ضربه‌ی بعدی «ضربه‌ی اول» است
   if(turn==='blue'){ phase='aiwait'; aiTimer = performance.now()+750; }
   else { phase='aim'; if(typeof startTurnTimer==='function') startTurnTimer(); }
   updateHUD();
