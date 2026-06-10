@@ -33,8 +33,64 @@ function noise(dur, vol){
   src.connect(g); g.connect(a.destination); src.start();
 }
 function kickSound(){ if(!soundOn)return; beep(165,0.08,'triangle',0.28); beep(90,0.13,'sine',0.22); noise(0.05,0.08); }
-function hit(v){ if(!soundOn)return; const vol=Math.min(0.26, 0.05+v*0.012); beep(230,0.05,'square',vol); }
-function thud(v){ if(!soundOn)return; const vol=Math.min(0.20, 0.04+Math.abs(v)*0.008); beep(120,0.07,'sine',vol); }
+
+/* برخوردِ مهره‌ها = «تق»ِ چوبیِ طبیعی (نه ۸بیتی):
+   بلیپِ مثلثیِ کوتاه با افتِ سریعِ زیروبم + کلیکِ نویزِ باندپاس */
+function hit(v){
+  if(!soundOn) return;
+  const a = audio(); if(!a) return;
+  const t = a.currentTime;
+  const amt = Math.min(1, Math.abs(v)/12);
+  const vol = Math.min(0.30, 0.10 + amt*0.20);
+  // بدنه‌ی کلیک: مثلثی با افتِ سریعِ فرکانس → حسِ ضربه‌ی چوب/پلاستیک
+  const o = a.createOscillator(); o.type = 'triangle';
+  o.frequency.setValueAtTime(540 + amt*120, t);
+  o.frequency.exponentialRampToValueAtTime(190, t + 0.05);
+  const g = a.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.004);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.075);
+  o.connect(g); g.connect(a.destination);
+  o.start(t); o.stop(t + 0.1);
+  // ترَنزینتِ نویزِ خیلی کوتاهِ باندپاس → «تق»ِ طبیعی
+  const len = Math.floor(a.sampleRate * 0.03);
+  const buf = a.createBuffer(1, len, a.sampleRate);
+  const dd = buf.getChannelData(0);
+  for(let i=0;i<len;i++) dd[i] = (Math.random()*2-1) * (1 - i/len);
+  const ns = a.createBufferSource(); ns.buffer = buf;
+  const bp = a.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value = 1500; bp.Q.value = 1.1;
+  const ng = a.createGain(); ng.gain.value = vol * 0.55;
+  ns.connect(bp); bp.connect(ng); ng.connect(a.destination); ns.start(t);
+}
+
+/* برخورد با دیواره/تیرک = بومِ بَم (سینوسیِ کم‌فرکانس با افتِ زیروبم + ترَنزینتِ پایین‌گذر) */
+function thud(v){
+  if(!soundOn) return;
+  const a = audio(); if(!a) return;
+  const t = a.currentTime;
+  const amt = Math.min(1, Math.abs(v)/14);
+  const vol = Math.min(0.46, 0.16 + amt*0.30);
+  // بدنه‌ی بَم: سینوسی که سریع از زیر به بم می‌افتد → «بوم»ِ عمیق
+  const o = a.createOscillator(); o.type = 'sine';
+  o.frequency.setValueAtTime(150, t);
+  o.frequency.exponentialRampToValueAtTime(52, t + 0.18);
+  const lp = a.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value = 320;
+  const g = a.createGain();
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.exponentialRampToValueAtTime(vol, t + 0.012);
+  g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+  o.connect(lp); lp.connect(g); g.connect(a.destination);
+  o.start(t); o.stop(t + 0.3);
+  // ترَنزینتِ کوبه‌ایِ کوتاهِ پایین‌گذر برای حسِ تماس
+  const len = Math.floor(a.sampleRate * 0.04);
+  const buf = a.createBuffer(1, len, a.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<len;i++) d[i] = (Math.random()*2-1) * (1 - i/len);
+  const n = a.createBufferSource(); n.buffer = buf;
+  const nlp = a.createBiquadFilter(); nlp.type='lowpass'; nlp.frequency.value = 600;
+  const ng = a.createGain(); ng.gain.value = vol * 0.45;
+  n.connect(nlp); nlp.connect(ng); ng.connect(a.destination); n.start(t);
+}
 function impactSound(v){ hit(v); }
 function whistle(){ if(!soundOn)return; beep(2000,0.12,'square',0.12); setTimeout(()=>beep(2350,0.10,'square',0.10),95); }
 function cutWhistle(){ if(!soundOn)return; beep(2100,0.42,'square',0.13); }
